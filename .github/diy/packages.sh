@@ -2,7 +2,7 @@
 
 
 git clone --depth 1 -b packages https://github.com/xiaorouji/openwrt-passwall passwall-packages && mv -n passwall-packages/* ./ && rm -rf passwall-packages
-
+git clone --depth 1 -b luci https://github.com/xiaorouji/openwrt-passwall passwall-luci && mv -n passwall-luci/luci-app-passwall ./ ; rm -rf passwall-luci
 
 
 # Delete duplicated packages

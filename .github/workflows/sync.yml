@@ -72,16 +72,6 @@ jobs:
           echo "nothing to commit"
           exit 0
         fi || exit 0
-        
-    - name: Add luci-app-passwall
-      run: |
-        git checkout packages
-        Switched to branch 'packages'
-        
-        git checkout luci -- luci-app-passwall
-        git add luci-app-passwall
-        
-        git commit -m "Adding 'luci-app-passwall' directory from 'luci' branch."
 
     - name: Delete Old Workflows    
       uses: Mattraks/delete-workflow-runs@v2
