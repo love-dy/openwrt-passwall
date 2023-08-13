@@ -3,7 +3,8 @@
 # Description: Sync
 #
 
-name: Sync Passwall
+name: Sync
+run-name: Sync Passwall
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
