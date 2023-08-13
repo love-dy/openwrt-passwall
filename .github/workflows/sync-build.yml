@@ -22,7 +22,7 @@ permissions: write-all
 jobs:
   sync_passwall:
     runs-on: ubuntu-latest
-    name: Update ${{matrix.target}}
+    name: Update ${{matrix.brancn}}
     strategy:
       fail-fast: false
       matrix:
@@ -37,13 +37,13 @@ jobs:
     - name: Clone packages
       run: |
         cd $GITHUB_WORKSPACE
-        chmod +x .github/diy/main.sh
+        chmod +x .github/diy/${{matrix.brancn}}.sh
         git clone -b ${{matrix.brancn}} https://github.com/love-dy/openwrt-passwall.git ${{matrix.brancn}}
         
         cd ${{matrix.brancn}}
         git rm -r --cache * >/dev/null 2>&1 &
         rm -rf `find ./* -maxdepth 0 -type d ! -name "diy"` >/dev/null 2>&1
-        $GITHUB_WORKSPACE/.github/diy/main.sh
+        $GITHUB_WORKSPACE/.github/diy/${{matrix.brancn}}.sh
         bash /$GITHUB_WORKSPACE/.github/diy/convert_translation.sh
         bash /$GITHUB_WORKSPACE/.github/diy/create_acl_for_luci.sh -a
         bash /$GITHUB_WORKSPACE/.github/diy/Modify.sh
@@ -67,17 +67,16 @@ jobs:
         fi || exit 0
 
   build_passwall:
-    name: Build_${{matrix.target}}_${{matrix.branch}}
+    name: Build_${{matrix.arch}}_${{matrix.branch}}
     needs: [sync_passwall]
     runs-on: ubuntu-latest      
     strategy:
       fail-fast: false
       matrix:
-        arch:
         #arch:
         #  - x86_64
         #  - aarch64_generic
-        target: [x86_64, aarch64_generic]
+        arch: [x86_64, aarch64_generic]
         branch: [packages]
           
     steps:
@@ -127,14 +126,14 @@ jobs:
       uses: immortalwrt/gh-action-sdk@v4.2     
       env:
         #ARCH: ${{ matrix.arch }}-${{ env.BRANCH }}
-        ARCH: ${{matrix.target}}
+        ARCH: ${{matrix.arch}}
         FEEDNAME: passwall_packages
 
     - name: Move created packages to project dir
       run: | 
         mkdir upload
-        #cp bin/packages/${{ matrix.target }}/packages_ci/*.ipk passwall || true
-        zip -jr upload/passwall_packages_ipk_${{matrix.target}}.zip bin/packages/*/passwall_packages/
+        #cp bin/packages/${{ matrix.arch }}/packages_ci/*.ipk passwall || true
+        zip -jr upload/passwall_packages_ipk_${{matrix.arch}}.zip bin/packages/*/passwall_packages/
         echo "FIRMPATH=$PWD" >> $GITHUB_ENV
 
     - name: Collect metadata
@@ -145,7 +144,7 @@ jobs:
         echo "HEAD_ID=$(git rev-parse --short HEAD^2)" >> $GITHUB_ENV
         PRNUMBER=${GITHUB_REF_NAME%/merge}
         echo "PRNUMBER=$PRNUMBER" >> $GITHUB_ENV
-        echo "ARCHIVE_NAME=${{matrix.target}}-packages-$MERGE_ID" >> $GITHUB_ENV              
+        echo "ARCHIVE_NAME=${{matrix.arch}}-packages-$MERGE_ID" >> $GITHUB_ENV              
 
     - name: Generate metadata
       run: |
@@ -157,8 +156,8 @@ jobs:
         Home-page: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pull/$PRNUMBER
         Download-URL: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
         Summary: $PACKAGES
-        Platform: ${{ matrix.target }}
-        Packages for ImmortalWrt $BRANCH running on ${{matrix.target}}, built from PR $PRNUMBER
+        Platform: ${{ matrix.arch }}
+        Packages for ImmortalWrt $BRANCH running on ${{matrix.arch}}, built from PR $PRNUMBER
         at commit $HEAD_ID, against $BRANCH at commit $BASE_ID, with merge SHA $MERGE_ID.
         Modified packages:
         _EOF_
@@ -175,7 +174,9 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{env.ARCHIVE_NAME}}_${{env.date1}}
-        files: ${{ env.FIRMPATH }}/upload/*
+        files: |
+          ${{ env.FIRMPATH }}/upload/*
+          PKG-INFO
         body: |
           这是Passwall升级包，内含多个设备！
           请选择你需要的升级包！
