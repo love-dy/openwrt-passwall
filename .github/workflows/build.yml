@@ -3,7 +3,8 @@
 # Description: Build
 #
 
-name: Build Passwall
+name: Build
+run-name: Build Passwall
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -21,13 +22,16 @@ permissions: write-all
   
 jobs:
   build_passwall:
-    name: Build ${{matrix.target}}
+    name: Build ${{matrix.target}} ${{matrix.branch}}
     runs-on: ubuntu-latest      
     strategy:
       fail-fast: false
       matrix:
+        #arch:
+        #  - x86_64
+        #  - aarch64_generic
         target: [x86_64, aarch64_generic]
-        brancn: [packages,luci]
+        branch: [packages,luci]
         
     steps:
     - uses: actions/checkout@v3
@@ -45,7 +49,7 @@ jobs:
 
     - name: Determine branch name
       run: |
-        BRANCH=${{matrix.brancn}}
+        BRANCH=${{matrix.branch}}
         echo "Building for $BRANCH"
         echo "BRANCH=$BRANCH" >> $GITHUB_ENV
 
