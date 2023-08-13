@@ -1,0 +1,108 @@
+#
+# Copyright (c) 2022-2023 passwall <https://github.com/xiaorouji/openwrt-passwall>
+# Description: Build
+#
+
+name: Build
+run-name: Build Passwall
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  REPO_TOKEN: ${{ secrets.ACCESS_TOKEN }} 
+
+on:
+  workflow_dispatch:
+    inputs:
+      packages:
+        description: 'packages'
+        required: false
+        default: 'false'
+        
+permissions: write-all
+  
+jobs:
+  build_passwall:
+    name: Build_${{matrix.target}}_${{matrix.branch}}
+    runs-on: ubuntu-latest      
+    strategy:
+      fail-fast: false
+      matrix:
+        #arch:
+        #  - x86_64
+        #  - aarch64_generic
+        target: [x86_64, aarch64_generic]
+        branch: [packages]
+        
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.ACCESS_TOKEN }} 
+          
+    - name: Initialization values
+      run: |
+          sudo -E timedatectl set-timezone "Asia/Shanghai" 
+          
+          echo "date1=$(date +'%Y.%m.%d-%H.%M')" >> $GITHUB_ENV
+          echo "date2=$(date +'%Y.%m.%d')" >> $GITHUB_ENV
+          echo "date3=$(date +'%m.%d')" >> $GITHUB_ENV
+
+    - name: Determine branch name
+      run: |
+        BRANCH=${{matrix.branch}}
+        echo "Building for $BRANCH"
+        echo "BRANCH=$BRANCH" >> $GITHUB_ENV     
+          
+    - name: Build passwall
+      uses: immortalwrt/gh-action-sdk@v4.2   
+      env:
+        #ARCH: ${{matrix.arch}}-${{ env.BRANCH }}
+        ARCH: ${{matrix.target}}
+        FEEDNAME: packages_ci
+
+    - name: Move created packages to project dir
+      run: | 
+        mkdir passwall
+        cp bin/packages/${{ matrix.target }}/packages_ci/*.ipk passwall || true
+        echo "FIRMPATH=$PWD" >> $GITHUB_ENV
+        tar -czvf ${{matrix.target}}-packages_${{env.date1}}.tar.gz passwall
+
+    - name: Collect metadata
+      run: |
+        MERGE_ID=$(git rev-parse --short HEAD)
+        echo "MERGE_ID=$MERGE_ID" >> $GITHUB_ENV
+        echo "ARCHIVE_NAME=${{matrix.target}}-packages-$MERGE_ID" >> $GITHUB_ENV              
+            
+    - name: Release packages
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{env.ARCHIVE_NAME}}_${{env.date1}}
+        files: | 
+          ${{ env.FIRMPATH }}/*.tar.gz
+
+        body: |
+          这是SSR Plus+升级包，内含多个设备！
+          请选择你需要的升级包！
+
+    - name: Delete old releases
+      uses: dev-drprasad/delete-older-releases@v0.2.1      
+      with:
+        #要保留的最新版本的数量
+        keep_latest: 6
+        #删除与旧版本关联的标签, 没有任何关联版本的旧标签不会被删除
+        delete_tags: true
+        
+    - name: Delete Old Workflows    
+      uses: Mattraks/delete-workflow-runs@v2.0.4
+      with:
+        token: ${{ github.token }}
+        repository: ${{ github.repository }}
+        #计算到目前为止每个工作流已保留的天数, 达到指定的天数工作流将被删除
+        retain_days: 1
+        #为每个工作流保留的最少运行次数
+        keep_minimum_runs: 0          
+
+          
+          
+#  #########################################################
+
