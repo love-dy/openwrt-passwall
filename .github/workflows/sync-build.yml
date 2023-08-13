@@ -183,7 +183,9 @@ jobs:
           opkg install *.ipk --force-reinstall
 
     - name: Delete old releases
-      uses: dev-drprasad/delete-older-releases@v0.2.1      
+      uses: dev-drprasad/delete-older-releases@v0.2.1 
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}      
       with:
         #要保留的最新版本的数量
         keep_latest: 6
