@@ -71,7 +71,7 @@ jobs:
         done
         # fallback to test packages if nothing explicitly changes this is
         # should run if other mechanics in packages.git changed
-        PACKAGES="${PACKAGES:-luci-app-ssr-plus}"
+        PACKAGES="${PACKAGES:-luci-app-passwall}"
 
         echo "Building $PACKAGES"
         echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV        
