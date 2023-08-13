@@ -78,7 +78,7 @@ jobs:
         token: ${{ github.token }}
         repository: ${{ github.repository }}
         #计算到目前为止每个工作流已保留的天数, 达到指定的天数工作流将被删除
-        retain_days: 1
+        retain_days: 0
         #为每个工作流保留的最少运行次数
         keep_minimum_runs: 0  
 
