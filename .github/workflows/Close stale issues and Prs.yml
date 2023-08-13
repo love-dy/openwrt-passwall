@@ -3,6 +3,13 @@ on:
 #  schedule:
 #    - cron: "30 1 * * *"
 
+  workflow_dispatch:
+    inputs:
+      ssh:
+        description: 'SSH connection to Actions'
+        required: false
+        default: 'false'
+
 jobs:
   stale:
     runs-on: ubuntu-latest
