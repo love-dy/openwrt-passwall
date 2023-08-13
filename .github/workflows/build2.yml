@@ -58,14 +58,15 @@ jobs:
       env:
         #ARCH: ${{matrix.arch}}-${{ env.BRANCH }}
         ARCH: ${{matrix.target}}
-        FEEDNAME: packages_ci
+        FEEDNAME: passwall_packages
 
     - name: Move created packages to project dir
       run: | 
-        mkdir passwall
-        cp bin/packages/${{ matrix.target }}/packages_ci/*.ipk passwall || true
+        mkdir upload
+        #cp bin/packages/${{ matrix.target }}/packages_ci/*.ipk passwall || true
+        zip -jr upload/passwall_packages_ipk_${{matrix.target}}.zip bin/packages/*/passwall_packages/
         echo "FIRMPATH=$PWD" >> $GITHUB_ENV
-        tar -czvf ${{matrix.target}}-packages_${{env.date1}}.tar.gz passwall
+        #tar -czvf ${{matrix.target}}-packages_${{env.date1}}.tar.gz passwall
 
     - name: Collect metadata
       run: |
@@ -77,8 +78,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{env.ARCHIVE_NAME}}_${{env.date1}}
-        files: | 
-          ${{ env.FIRMPATH }}/*.tar.gz
+        files: ${{ env.FIRMPATH }}/upload/*
 
         body: |
           这是SSR Plus+升级包，内含多个设备！
