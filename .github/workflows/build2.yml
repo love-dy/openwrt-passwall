@@ -3,7 +3,7 @@
 # Description: Build
 #
 
-name: Build
+name: Build2
 run-name: Build Passwall
 
 env:
