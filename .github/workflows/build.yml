@@ -79,7 +79,8 @@ jobs:
     - name: Build passwall
       uses: immortalwrt/gh-action-sdk@master    
       env:
-        ARCH: ${{matrix.target}}-${{ env.BRANCH }}
+        #ARCH: ${{matrix.target}}-${{ env.BRANCH }}
+        ARCH: ${{matrix.target}}
         FEEDNAME: packages_ci
 
     - name: Move created packages to project dir
