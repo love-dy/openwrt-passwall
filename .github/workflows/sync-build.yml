@@ -22,7 +22,7 @@ permissions: write-all
 jobs:
   sync_passwall:
     runs-on: ubuntu-latest
-    name: Update ${{matrix.brancn}}
+    name: Sync ${{matrix.brancn}}
     strategy:
       fail-fast: false
       matrix:

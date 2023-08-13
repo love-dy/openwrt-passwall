@@ -9,8 +9,8 @@
 # Description: Source code update checker
 #
 
-name: Update
-run-name: Update Packages
+name: Check
+run-name: Check Packages
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -35,7 +35,7 @@ permissions: write-all
 jobs:
   check_passwall_hash:
     runs-on: ubuntu-latest
-    name: Update ${{matrix.target}}
+    name: Check ${{matrix.target}}
     strategy:
       fail-fast: false
       matrix:
