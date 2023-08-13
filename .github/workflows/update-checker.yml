@@ -1,0 +1,94 @@
+#
+# Copyright (c) 2019-2021 P3TERX <https://p3terx.com>
+#
+# This is free software, licensed under the MIT License.
+# See /LICENSE for more information.
+#
+# https://github.com/P3TERX/Actions-OpenWrt
+# File: .github/workflows/update-checker.yml
+# Description: Source code update checker
+#
+
+name: Update Checker
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  REPO_TOKEN: ${{ secrets.ACCESS_TOKEN }} 
+  
+  PASSWALL_URL: https://github.com/xiaorouji/openwrt-passwall
+  PKG_BRANCH: packages
+  LUCI_BRANCH: luci
+
+on:
+  #push:
+  #  paths:
+  #    - '.github/workflows/update-checker.yml'
+  #    - '.github/workflows/OWRT-CORE.yml'
+  #自动触发：每天早上4点(UTC 20:00) --分 时 日 月 周
+  schedule:
+    - cron: 0 */8 * * *    
+  #手动触发
+  workflow_dispatch:
+
+permissions: write-all
+
+jobs:
+  check_ssr_hash:
+    runs-on: ubuntu-latest
+    outputs:
+      ssr_update: ${{ steps.value_ssr.outputs.lede_update }}
+      
+    steps:    
+    - name: Get SSR Hash
+      id: get_ssrHash
+      run: |
+        git clone --depth 1 $SSR_URL -b $SSR_BRANCH .
+        echo "{ssrHash}={git rev-parse HEAD}" >> $GITHUB_OUTPUT
+
+    - name: Compare SSR Hash
+      id: cache_ssrHash
+      uses: actions/cache@v3
+      with:
+        path: .ssrHash
+        key: HEAD-${{ steps.get_ssrHash.outputs.ssrHash }}
+
+    - name: Save New SSR Hash
+      id: value_ssr
+      if: steps.cache_ssrHash.outputs.cache-hit != 'true'
+      run: |
+        echo ${{ steps.get_ssrHash.outputs.ssrHash }} | tee .ssrHash
+        
+        ssr_update='true'
+        echo "ssr_update=${ssr_update}" >> $GITHUB_OUTPUT
+        echo "ssr_update: ${ssr_update}"
+
+  ssr_sync_build:
+    needs: [check_ssr_hash]
+    if: needs.check_ssr_hash.outputs.ssr_update == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Trigger Sync
+      uses: peter-evans/repository-dispatch@v2
+      with:
+        token: ${{ secrets.ACCESS_TOKEN }}
+        event-type: Source Code Update
+
+    - name: Delete Old Workflows    
+      uses: Mattraks/delete-workflow-runs@v2
+      with:
+        token: ${{ github.token }}
+        repository: ${{ github.repository }}
+        #计算到目前为止每个工作流已保留的天数, 达到指定的天数工作流将被删除
+        retain_days: 1
+        #为每个工作流保留的最少运行次数
+        keep_minimum_runs: 0  
+
+       
+    
+
+        
+        
+        
+#  ########################################################
+

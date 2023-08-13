@@ -4,15 +4,15 @@
 #
 name: "Auto update packages v2"
 on:
-  repository_dispatch:
+#  repository_dispatch:
   workflow_dispatch:
     inputs:
       ssh:
         description: 'SSH connection to Actions'
         required: false
         default: 'false'
-  schedule:
-    - cron: "0 */4 * * *"
+#  schedule:
+#    - cron: "0 */4 * * *"
 env:
   TZ: Asia/Shanghai
 

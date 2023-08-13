@@ -1,0 +1,155 @@
+#
+# Copyright (c) 2022-2023 passwall <https://github.com/xiaorouji/openwrt-passwall>
+# Description: Build
+#
+
+name: Build Passwall
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  REPO_TOKEN: ${{ secrets.ACCESS_TOKEN }} 
+
+on:
+  workflow_dispatch:
+    inputs:
+      packages:
+        description: 'packages'
+        required: false
+        default: 'false'
+        
+permissions: write-all
+  
+jobs:
+  build_ssrp:
+    name: Build ${{ matrix.arch }}
+    runs-on: ubuntu-latest      
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - x86_64
+          - aarch64_generic
+          
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.ACCESS_TOKEN }} 
+          
+    - name: Initialization values
+      run: |
+          sudo -E timedatectl set-timezone "Asia/Shanghai" 
+          
+          echo "date1=$(date +'%Y.%m.%d-%H.%M')" >> $GITHUB_ENV
+          echo "date2=$(date +'%Y.%m.%d')" >> $GITHUB_ENV
+          echo "date3=$(date +'%m.%d')" >> $GITHUB_ENV
+
+    - name: Determine branch name
+      run: |
+        BRANCH="master"
+        echo "Building for $BRANCH"
+        echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+
+    - name: Determine changed packages
+      run: |
+        # only detect packages with changes
+        PKG_ROOTS=$(find . -name Makefile | \
+          grep -v ".*/src/Makefile" | \
+          sed -e 's@./\(.*\)/Makefile@\1/@')
+        CHANGES=$(git diff --diff-filter=d --name-only origin/$BRANCH)
+
+        for ROOT in $PKG_ROOTS; do
+          for CHANGE in $CHANGES; do
+            if [[ "$CHANGE" == "$ROOT"* ]]; then
+              PACKAGES+=$(echo "$ROOT" | sed -e 's@\(.*\)/@\1 @')
+              break
+            fi
+          done
+        done
+        # fallback to test packages if nothing explicitly changes this is
+        # should run if other mechanics in packages.git changed
+        PACKAGES="${PACKAGES:-luci-app-ssr-plus}"
+
+        echo "Building $PACKAGES"
+        echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
+          
+    - name: Build ssr-plus+
+      uses: immortalwrt/gh-action-sdk@v4.1     
+      env:
+        ARCH: ${{ matrix.arch }}-${{ env.BRANCH }}
+        FEEDNAME: packages_ci
+
+    - name: Move created packages to project dir
+      run: | 
+        mkdir ssrp
+        cp bin/packages/${{ matrix.arch }}/packages_ci/*.ipk ssrp || true
+        echo "FIRMPATH=$PWD" >> $GITHUB_ENV
+        tar -czvf ${{matrix.arch}}-packages_${{env.date1}}.tar.gz ssrp
+
+    - name: Collect metadata
+      run: |
+        MERGE_ID=$(git rev-parse --short HEAD)
+        echo "MERGE_ID=$MERGE_ID" >> $GITHUB_ENV
+        echo "BASE_ID=$(git rev-parse --short HEAD^1)" >> $GITHUB_ENV
+        echo "HEAD_ID=$(git rev-parse --short HEAD^2)" >> $GITHUB_ENV
+        PRNUMBER=${GITHUB_REF_NAME%/merge}
+        echo "PRNUMBER=$PRNUMBER" >> $GITHUB_ENV
+        echo "ARCHIVE_NAME=${{matrix.arch}}-packages-$MERGE_ID" >> $GITHUB_ENV              
+
+    - name: Generate metadata
+      run: |
+        cat << _EOF_ > PKG-INFO
+        Metadata-Version: 2.1
+        Name: ${{env.ARCHIVE_NAME}}
+        Version: $BRANCH
+        Author: $GITHUB_ACTOR
+        Home-page: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pull/$PRNUMBER
+        Download-URL: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+        Summary: $PACKAGES
+        Platform: ${{ matrix.arch }}
+        Packages for ImmortalWrt $BRANCH running on ${{matrix.arch}}, built from PR $PRNUMBER
+        at commit $HEAD_ID, against $BRANCH at commit $BASE_ID, with merge SHA $MERGE_ID.
+        Modified packages:
+        _EOF_
+        for p in $PACKAGES
+        do
+          echo "  "$p >> PKG-INFO
+        done
+        echo >> PKG-INFO
+        echo Full file listing: >> PKG-INFO
+        ls -al *.ipk >> PKG-INFO || true
+        cat PKG-INFO
+            
+    - name: Release packages
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{env.ARCHIVE_NAME}}_${{env.date1}}
+        files: | 
+          ${{ env.FIRMPATH }}/*.tar.gz
+          PKG-INFO
+        body: |
+          这是SSR Plus+升级包，内含多个设备！
+          请选择你需要的升级包！
+
+    - name: Delete old releases
+      uses: dev-drprasad/delete-older-releases@master      
+      with:
+        #要保留的最新版本的数量
+        keep_latest: 6
+        #删除与旧版本关联的标签, 没有任何关联版本的旧标签不会被删除
+        delete_tags: true
+        
+    - name: Delete Old Workflows    
+      uses: Mattraks/delete-workflow-runs@v2
+      with:
+        token: ${{ github.token }}
+        repository: ${{ github.repository }}
+        #计算到目前为止每个工作流已保留的天数, 达到指定的天数工作流将被删除
+        retain_days: 1
+        #为每个工作流保留的最少运行次数
+        keep_minimum_runs: 0          
+
+          
+          
+#  #########################################################
+
