@@ -16,8 +16,7 @@ env:
   REPO_TOKEN: ${{ secrets.ACCESS_TOKEN }} 
   
   PASSWALL_URL: https://github.com/xiaorouji/openwrt-passwall
-  PKG_BRANCH: packages
-  LUCI_BRANCH: luci
+
 
 on:
   #push:
@@ -33,38 +32,43 @@ on:
 permissions: write-all
 
 jobs:
-  check_ssr_hash:
+  check_passwall_hash:
     runs-on: ubuntu-latest
+    name: Update ${{matrix.target}}
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [packages,luci]
     outputs:
-      ssr_update: ${{ steps.value_ssr.outputs.lede_update }}
+      passwall_update: ${{ steps.save_passwallHash.outputs.passwall_update }}
       
     steps:    
     - name: Get SSR Hash
-      id: get_ssrHash
+      id: get_passwallHash
       run: |
-        git clone --depth 1 $SSR_URL -b $SSR_BRANCH .
-        echo "{ssrHash}={git rev-parse HEAD}" >> $GITHUB_OUTPUT
+        git clone --depth 1 $PASSWALL_URL -b ${{matrix.target}} .
+        echo "{passwallHash}={git rev-parse HEAD}" >> $GITHUB_OUTPUT
 
-    - name: Compare SSR Hash
-      id: cache_ssrHash
+    - name: Compare Passwall Hash
+      id: cache_passwallHash
       uses: actions/cache@v3
       with:
-        path: .ssrHash
-        key: HEAD-${{ steps.get_ssrHash.outputs.ssrHash }}
+        path: .passwallHash
+        key: HEAD-${{ steps.get_passwallHash.outputs.passwallHash }}
 
-    - name: Save New SSR Hash
-      id: value_ssr
-      if: steps.cache_ssrHash.outputs.cache-hit != 'true'
+    - name: Save New Passwall Hash
+      id: save_passwallHash
+      if: steps.cache_passwallHash.outputs.cache-hit != 'true'
       run: |
-        echo ${{ steps.get_ssrHash.outputs.ssrHash }} | tee .ssrHash
+        echo ${{ steps.get_passwallHash.outputs.passwallHash }} | tee .passwallHash
         
-        ssr_update='true'
-        echo "ssr_update=${ssr_update}" >> $GITHUB_OUTPUT
-        echo "ssr_update: ${ssr_update}"
+        passwall_update='true'
+        echo "passwall_update=${passwall_update}" >> $GITHUB_OUTPUT
+        echo "passwall_update: ${passwall_update}"
 
-  ssr_sync_build:
-    needs: [check_ssr_hash]
-    if: needs.check_ssr_hash.outputs.ssr_update == 'true'
+  passwall_sync_build:
+    needs: [check_passwall_hash]
+    if: needs.check_passwall_hash.outputs.passwall_update == 'true'
     runs-on: ubuntu-latest
     
     steps:

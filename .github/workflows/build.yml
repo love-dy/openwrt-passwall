@@ -20,16 +20,15 @@ on:
 permissions: write-all
   
 jobs:
-  build_ssrp:
+  build_passwall:
     name: Build ${{ matrix.arch }}
     runs-on: ubuntu-latest      
     strategy:
       fail-fast: false
       matrix:
-        arch:
-          - x86_64
-          - aarch64_generic
-          
+        target: [x86_64, aarch64_generic]
+        brancn: [packages,luci]
+        
     steps:
     - uses: actions/checkout@v3
       with:
@@ -68,7 +67,7 @@ jobs:
         done
         # fallback to test packages if nothing explicitly changes this is
         # should run if other mechanics in packages.git changed
-        PACKAGES="${PACKAGES:-luci-app-ssr-plus}"
+        PACKAGES="${PACKAGES:-luci-app-passwall}"
 
         echo "Building $PACKAGES"
         echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
@@ -82,9 +81,9 @@ jobs:
     - name: Move created packages to project dir
       run: | 
         mkdir ssrp
-        cp bin/packages/${{ matrix.arch }}/packages_ci/*.ipk ssrp || true
+        cp bin/packages/${{ matrix.arch }}/packages_ci/*.ipk passwall || true
         echo "FIRMPATH=$PWD" >> $GITHUB_ENV
-        tar -czvf ${{matrix.arch}}-packages_${{env.date1}}.tar.gz ssrp
+        tar -czvf ${{matrix.arch}}-packages_${{env.date1}}.tar.gz passwall
 
     - name: Collect metadata
       run: |

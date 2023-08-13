@@ -20,13 +20,13 @@ on:
 permissions: write-all        
 
 jobs:
-  sync_ssrp:
+  sync_passwall:
     runs-on: ubuntu-latest
-    name: Update ${{matrix.target}}
+    name: Update ${{matrix.brancn}}
     strategy:
       fail-fast: false
       matrix:
-        target: [packages,luci]
+        brancn: [packages,luci]
         
     steps:
     - name: Checkout
@@ -43,13 +43,13 @@ jobs:
     - name: Clone packages
       run: |
         cd $GITHUB_WORKSPACE
-        chmod +x .github/diy/${{matrix.target}}.sh
-        git clone -b ${{matrix.target}} https://github.com/love-dy/openwrt-passwall.git ${{matrix.target}}
+        chmod +x .github/diy/${{matrix.brancn}}.sh
+        git clone -b ${{matrix.brancn}} https://github.com/love-dy/openwrt-passwall.git ${{matrix.brancn}}
         
-        cd ${{matrix.target}}
+        cd ${{matrix.brancn}}
         git rm -r --cache * >/dev/null 2>&1 &
         rm -rf `find ./* -maxdepth 0 -type d ! -name "diy"` >/dev/null 2>&1
-        $GITHUB_WORKSPACE/.github/diy/${{matrix.target}}.sh
+        $GITHUB_WORKSPACE/.github/diy/${{matrix.brancn}}.sh
         bash /$GITHUB_WORKSPACE/.github/diy/convert_translation.sh
         bash /$GITHUB_WORKSPACE/.github/diy/create_acl_for_luci.sh -a
         bash /$GITHUB_WORKSPACE/.github/diy/Modify.sh
@@ -57,16 +57,16 @@ jobs:
     - name: Upload packages
       run: |
         if [ -e $GITHUB_WORKSPACE/LICENSE ]; then
-          cp $GITHUB_WORKSPACE/LICENSE $GITHUB_WORKSPACE/${{matrix.target}}
+          cp $GITHUB_WORKSPACE/LICENSE $GITHUB_WORKSPACE/${{matrix.brancn}}
         fi
         if [ -e $GITHUB_WORKSPACE/README.md ]; then
-          cp $GITHUB_WORKSPACE/README.md $GITHUB_WORKSPACE/${{matrix.target}}
+          cp $GITHUB_WORKSPACE/README.md $GITHUB_WORKSPACE/${{matrix.brancn}}
         fi
-        cd $GITHUB_WORKSPACE/${{matrix.target}}
+        cd $GITHUB_WORKSPACE/${{matrix.brancn}}
         if git status --porcelain | grep .; then
           git add .
           git commit -am "update $(date '+%Y-%m-%d %H:%M:%S')"
-          git push --quiet "https://${{ secrets.ACCESS_TOKEN }}@github.com/love-dy/openwrt-passwall.git" HEAD:${{matrix.target}}
+          git push --quiet "https://${{ secrets.ACCESS_TOKEN }}@github.com/love-dy/openwrt-passwall.git" HEAD:${{matrix.brancn}}
         else
           echo "nothing to commit"
           exit 0
