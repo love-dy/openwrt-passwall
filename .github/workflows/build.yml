@@ -84,7 +84,7 @@ jobs:
 
     - name: Move created packages to project dir
       run: | 
-        mkdir ssrp
+        mkdir passwall
         cp bin/packages/${{ matrix.target }}/packages_ci/*.ipk passwall || true
         echo "FIRMPATH=$PWD" >> $GITHUB_ENV
         tar -czvf ${{matrix.target}}-packages_${{env.date1}}.tar.gz passwall
