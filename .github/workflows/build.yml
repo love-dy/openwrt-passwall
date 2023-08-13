@@ -22,7 +22,7 @@ permissions: write-all
   
 jobs:
   build_passwall:
-    name: Build ${{matrix.target}} ${{matrix.branch}}
+    name: Build_${{matrix.target}}_${{matrix.branch}}
     runs-on: ubuntu-latest      
     strategy:
       fail-fast: false
@@ -79,7 +79,7 @@ jobs:
     - name: Build passwall
       uses: immortalwrt/gh-action-sdk@master    
       env:
-        #ARCH: ${{matrix.target}}-${{ env.BRANCH }}
+        #ARCH: ${{matrix.arch}}-${{ env.BRANCH }}
         ARCH: ${{matrix.target}}
         FEEDNAME: packages_ci
 

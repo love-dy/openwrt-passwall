@@ -9,7 +9,8 @@
 # Description: Source code update checker
 #
 
-name: Update Checker
+name: Update
+run-name: Update Packages
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
