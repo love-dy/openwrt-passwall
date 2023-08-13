@@ -30,7 +30,7 @@ jobs:
         
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v3.5.3
       with:
         fetch-depth: 0
         
@@ -81,7 +81,7 @@ jobs:
         branch: [packages]
           
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v3.5.3
       with:
         fetch-depth: 0
         token: ${{ secrets.ACCESS_TOKEN }} 
@@ -124,18 +124,18 @@ jobs:
         echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
           
     - name: Build passwall
-      uses: immortalwrt/gh-action-sdk@v4.1     
+      uses: immortalwrt/gh-action-sdk@v4.2     
       env:
         #ARCH: ${{ matrix.arch }}-${{ env.BRANCH }}
         ARCH: ${{matrix.target}}
-        FEEDNAME: packages_ci
+        FEEDNAME: passwall_packages
 
     - name: Move created packages to project dir
       run: | 
-        mkdir passwall
-        cp bin/packages/${{ matrix.target }}/packages_ci/*.ipk passwall || true
+        mkdir upload
+        #cp bin/packages/${{ matrix.target }}/packages_ci/*.ipk passwall || true
+        zip -jr upload/passwall_packages_ipk_${{matrix.target}}.zip bin/packages/*/passwall_packages/
         echo "FIRMPATH=$PWD" >> $GITHUB_ENV
-        tar -czvf ${{matrix.target}}-packages_${{env.date1}}.tar.gz passwall
 
     - name: Collect metadata
       run: |
@@ -175,15 +175,14 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{env.ARCHIVE_NAME}}_${{env.date1}}
-        files: | 
-          ${{ env.FIRMPATH }}/*.tar.gz
-          PKG-INFO
+        files: ${{ env.FIRMPATH }}/upload/*
         body: |
-          这是SSR Plus+升级包，内含多个设备！
+          这是Passwall升级包，内含多个设备！
           请选择你需要的升级包！
+          opkg install *.ipk --force-reinstall
 
     - name: Delete old releases
-      uses: dev-drprasad/delete-older-releases@master      
+      uses: dev-drprasad/delete-older-releases@v0.2.1      
       with:
         #要保留的最新版本的数量
         keep_latest: 6

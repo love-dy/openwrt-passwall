@@ -52,7 +52,7 @@ jobs:
 
     - name: Compare Passwall Hash
       id: cache_passwallHash
-      uses: actions/cache@v3
+      uses: actions/cache@v3.3.1
       with:
         path: .passwallHash
         key: HEAD-${{ steps.get_passwallHash.outputs.passwallHash }}
@@ -74,13 +74,13 @@ jobs:
     
     steps:
     - name: Trigger Sync
-      uses: peter-evans/repository-dispatch@v2
+      uses: peter-evans/repository-dispatch@v2.1.1
       with:
         token: ${{ secrets.ACCESS_TOKEN }}
         event-type: Source Code Update
 
     - name: Delete Old Workflows    
-      uses: Mattraks/delete-workflow-runs@v2
+      uses: Mattraks/delete-workflow-runs@v2.0.4
       with:
         token: ${{ github.token }}
         repository: ${{ github.repository }}
