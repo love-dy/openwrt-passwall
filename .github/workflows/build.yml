@@ -21,7 +21,7 @@ permissions: write-all
   
 jobs:
   build_passwall:
-    name: Build ${{ matrix.arch }}
+    name: Build ${{matrix.target}}
     runs-on: ubuntu-latest      
     strategy:
       fail-fast: false
@@ -45,7 +45,7 @@ jobs:
 
     - name: Determine branch name
       run: |
-        BRANCH="master"
+        BRANCH=${{matrix.brancn}}
         echo "Building for $BRANCH"
         echo "BRANCH=$BRANCH" >> $GITHUB_ENV
 
@@ -72,18 +72,18 @@ jobs:
         echo "Building $PACKAGES"
         echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
           
-    - name: Build ssr-plus+
+    - name: Build passwall
       uses: immortalwrt/gh-action-sdk@v4.1     
       env:
-        ARCH: ${{ matrix.arch }}-${{ env.BRANCH }}
+        ARCH: ${{ matrix.target }}-${{ env.BRANCH }}
         FEEDNAME: packages_ci
 
     - name: Move created packages to project dir
       run: | 
         mkdir ssrp
-        cp bin/packages/${{ matrix.arch }}/packages_ci/*.ipk passwall || true
+        cp bin/packages/${{ matrix.target }}/packages_ci/*.ipk passwall || true
         echo "FIRMPATH=$PWD" >> $GITHUB_ENV
-        tar -czvf ${{matrix.arch}}-packages_${{env.date1}}.tar.gz passwall
+        tar -czvf ${{matrix.target}}-packages_${{env.date1}}.tar.gz passwall
 
     - name: Collect metadata
       run: |
@@ -93,7 +93,7 @@ jobs:
         echo "HEAD_ID=$(git rev-parse --short HEAD^2)" >> $GITHUB_ENV
         PRNUMBER=${GITHUB_REF_NAME%/merge}
         echo "PRNUMBER=$PRNUMBER" >> $GITHUB_ENV
-        echo "ARCHIVE_NAME=${{matrix.arch}}-packages-$MERGE_ID" >> $GITHUB_ENV              
+        echo "ARCHIVE_NAME=${{matrix.target}}-packages-$MERGE_ID" >> $GITHUB_ENV              
 
     - name: Generate metadata
       run: |
@@ -105,8 +105,8 @@ jobs:
         Home-page: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pull/$PRNUMBER
         Download-URL: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
         Summary: $PACKAGES
-        Platform: ${{ matrix.arch }}
-        Packages for ImmortalWrt $BRANCH running on ${{matrix.arch}}, built from PR $PRNUMBER
+        Platform: ${{ matrix.target }}
+        Packages for ImmortalWrt $BRANCH running on ${{matrix.target}}, built from PR $PRNUMBER
         at commit $HEAD_ID, against $BRANCH at commit $BASE_ID, with merge SHA $MERGE_ID.
         Modified packages:
         _EOF_
