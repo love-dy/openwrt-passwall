@@ -31,7 +31,7 @@ jobs:
         #  - x86_64
         #  - aarch64_generic
         target: [x86_64, aarch64_generic]
-        branch: [packages,luci]
+        branch: [packages]
         
     steps:
     - uses: actions/checkout@v3
