@@ -35,11 +35,11 @@ permissions: write-all
 jobs:
   check_passwall_hash:
     runs-on: ubuntu-latest
-    name: Check ${{matrix.target}}
+    name: Check ${{matrix.branch}}
     strategy:
       fail-fast: false
       matrix:
-        target: [packages,luci]
+        branch: [packages,luci]
     outputs:
       passwall_update: ${{ steps.save_passwallHash.outputs.passwall_update }}
       
@@ -47,7 +47,7 @@ jobs:
     - name: Get SSR Hash
       id: get_passwallHash
       run: |
-        git clone --depth 1 $PASSWALL_URL -b ${{matrix.target}} .
+        git clone --depth 1 $PASSWALL_URL -b ${{matrix.branch}} .
         echo "{passwallHash}={git rev-parse HEAD}" >> $GITHUB_OUTPUT
 
     - name: Compare Passwall Hash
