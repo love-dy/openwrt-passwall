@@ -4,18 +4,12 @@
 #
 name: "openwrt sdk"
 on:
-  repository_dispatch:
   workflow_dispatch:
     inputs:
       ssh:
         description: 'SSH connection to Actions'
         required: false
         default: 'false'
-  push:
-    branches:
-      - 'luci'
-    paths:
-      - 'luci-app-passwall/Makefile'
 env:
   TZ: Asia/Shanghai
 
@@ -30,10 +24,9 @@ jobs:
       has_update: ${{ steps.check_version.outputs.has_update }}
     steps:
       - name: Checkout
-        uses: actions/checkout@main
+        uses: actions/checkout@v3.5.3
         with:
           fetch-depth: 0
-          ref: 'luci'
 
       - name: Check version
         id: check_version
@@ -49,24 +42,6 @@ jobs:
           echo "latest_version: ${latest_version}"
           echo "latest_release: ${latest_release}"
           echo "has_update: ${has_update}"
-
-      - name: Prepare release
-        if: steps.check_version.outputs.has_update == 'true'
-        run: |
-          echo "## :mega:Update content" >> release.txt
-          echo "![](https://img.shields.io/github/downloads/xiaorouji/openwrt-passwall/${{steps.check_version.outputs.latest_version}}/total?style=flat-square)" >> release.txt
-          echo "### Passwall Info" >> release.txt
-          echo "**:minidisc: Passwall Version: ${{steps.check_version.outputs.latest_version}}**" >> release.txt
-          touch release.txt
-
-      - name: Generate new tag & release
-        if: steps.check_version.outputs.has_update == 'true'
-        uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{steps.check_version.outputs.latest_version}}
-          body_path: release.txt
 
 
   job_build_passwall:
