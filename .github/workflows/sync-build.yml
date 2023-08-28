@@ -8,7 +8,7 @@ run-name: Sync & Build Passwall
 
 on:
   #自动触发,有更新时触发SYNC...
-  repository_dispatch: 
+  #repository_dispatch: 
 
   workflow_dispatch:
     inputs:
