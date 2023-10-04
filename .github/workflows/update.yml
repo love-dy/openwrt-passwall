@@ -25,8 +25,8 @@ on:
   #    - '.github/workflows/update-checker.yml'
   #    - '.github/workflows/OWRT-CORE.yml'
   #自动触发：每天早上4点(UTC 20:00) --分 时 日 月 周
-  schedule:
-    - cron: 0 */8 * * *    
+  #schedule:
+  #  - cron: 0 */8 * * *    
   #手动触发
   workflow_dispatch:
 
